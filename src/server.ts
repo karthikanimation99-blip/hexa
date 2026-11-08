@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import helmet from "helmet";
 import { config } from "./config/env";
+import healthRouter from "./routes/health";
 
 const app = express();
 
@@ -20,14 +21,7 @@ app.get("/", (_req, res) => {
   });
 });
 
-app.get("/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    status: "healthy",
-    service: "hexa-build-server",
-    timestamp: new Date().toISOString()
-  });
-});
+app.use("/health", healthRouter);
 
 const server = app.listen(config.PORT, "0.0.0.0", () => {
   console.log(`HEXA server running on port ${config.PORT}`);
@@ -49,4 +43,3 @@ function shutdown(signal: string): void {
 
 process.once("SIGTERM", () => shutdown("SIGTERM"));
 process.once("SIGINT", () => shutdown("SIGINT"));
-
