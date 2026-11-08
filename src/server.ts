@@ -2,10 +2,9 @@
 import "dotenv/config";
 import express from "express";
 import helmet from "helmet";
+import { config } from "./config/env";
 
 const app = express();
-
-const PORT = Number(process.env.PORT) || 3000;
 
 app.disable("x-powered-by");
 
@@ -30,8 +29,8 @@ app.get("/health", (_req, res) => {
   });
 });
 
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`HEXA server running on port ${PORT}`);
+const server = app.listen(config.PORT, "0.0.0.0", () => {
+  console.log(`HEXA server running on port ${config.PORT}`);
 });
 
 function shutdown(signal: string): void {
@@ -48,5 +47,6 @@ function shutdown(signal: string): void {
   });
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.once("SIGTERM", () => shutdown("SIGTERM"));
+process.once("SIGINT", () => shutdown("SIGINT"));
+
