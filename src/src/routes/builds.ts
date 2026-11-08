@@ -1,6 +1,7 @@
 
 import { Router } from "express";
 import { z } from "zod";
+import buildQueue from "../services/buildQueue";
 
 const router = Router();
 
@@ -14,10 +15,7 @@ const buildRequestSchema = z.object({
   platform: z.enum(["android", "ios"]),
   format: z.enum(["apk", "aab", "ipa"])
 }).superRefine((data, ctx) => {
-  if (
-    data.platform === "android" &&
-    data.format === "ipa"
-  ) {
+  if (data.platform === "android" && data.format === "ipa") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Android builds cannot use IPA format.",
@@ -25,10 +23,7 @@ const buildRequestSchema = z.object({
     });
   }
 
-  if (
-    data.platform === "ios" &&
-    data.format !== "ipa"
-  ) {
+  if (data.platform === "ios" && data.format !== "ipa") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "iOS builds must use IPA format.",
@@ -37,7 +32,7 @@ const buildRequestSchema = z.object({
   }
 });
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   const result = buildRequestSchema.safeParse(req.body);
 
   if (!result.success) {
@@ -48,14 +43,26 @@ router.post("/", (req, res) => {
     });
   }
 
-  return res.status(202).json({
-    success: true,
-    message: "Build request validated successfully.",
-    build: {
-      ...result.data,
-      status: "pending"
-    }
-  });
+  try {
+    const job = await buildQueue.add("build", result.data);
+
+    return res.status(202).json({
+      success: true,
+      message: "Build request added to the queue.",
+      build: {
+        id: job.id,
+        ...result.data,
+        status: "pending"
+      }
+    });
+  } catch (error) {
+    console.error("HEXA queue error:", error);
+
+    return res.status(503).json({
+      success: false,
+      message: "Build queue is currently unavailable."
+    });
+  }
 });
 
 export default router;
