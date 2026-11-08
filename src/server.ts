@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { config } from "./config/env";
 import healthRouter from "./routes/health";
 import buildsRouter from "./routes/builds";
+import buildStatusRouter from "./routes/buildStatus";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.get("/", (_req, res) => {
 
 app.use("/health", healthRouter);
 app.use("/api/builds", buildsRouter);
+app.use("/api/builds", buildStatusRouter);
 
 const server = app.listen(config.PORT, "0.0.0.0", () => {
   console.log(`HEXA server running on port ${config.PORT}`);
